@@ -15,8 +15,8 @@ class SongsService {
       const updatedAt = createdAt;
 
       const query = {
-         text: 'INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
-         values: [id, title, year, performer, genre, duration, albumId, updatedAt],
+         text: 'INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
+         values: [id, title, year, performer, genre, duration, albumId, createdAt, updatedAt],
       };
 
       const result = await this._pool.query(query);
@@ -29,7 +29,7 @@ class SongsService {
    }
 
    async getSongs() {
-      const result = await this._pool.query('SELECT * FROM songs');
+      const result = await this._pool.query('SELECT id, title, performer FROM songs');
       return result.rows.map(mapSongsDBToModel);
    }
 
@@ -50,9 +50,26 @@ class SongsService {
 
    async editSongById(id, { title, year, performer, genre, duration, albumId }) {
       const updatedAt = new Date().toISOString();
+      const values = [title, year, performer, genre];
+      const setClauses = ['title = $1', 'year = $2', 'performer = $3', 'genre = $4'];
+
+      if (duration !== undefined) {
+         values.push(duration);
+         setClauses.push(`duration = $${values.length}`);
+      }
+
+      if (albumId !== undefined) {
+         values.push(albumId);
+         setClauses.push(`albumId = $${values.length}`);
+      }
+
+      values.push(updatedAt, id);
+
       const query = {
-         text: 'UPDATE songs SET title = $1, year = $2, performer = $3, genre = $4, duration = $5, albumId = $6, updated_at = $7 WHERE id = $8 RETURNING id',
-         values: [title, year, performer, genre, duration, albumId, updatedAt, id],
+         text: `UPDATE songs SET ${setClauses.join(', ')}, updated_at = $${values.length - 1} WHERE id = $${
+            values.length
+         } RETURNING id`,
+         values,
       };
 
       const result = await this._pool.query(query);
