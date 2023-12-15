@@ -30,7 +30,22 @@ class AlbumsHandler {
 
    async getAlbumByIdHandler(request, h) {
       const { id } = request.params;
-      const album = await this._service.getAlbumById(id);
+      const result = await this._service.getAlbumById(id);
+
+      const album = {
+         id: result[0].album_id,
+         name: result[0].album_name,
+         year: result[0].album_year,
+         songs:
+            result[0].song_id
+               ? result.map((song) => ({
+                  id: song.song_id,
+                  title: song.song_title,
+                  performer: song.song_performer,
+               }))
+               : [],
+      };
+
       return {
          status: 'success',
          data: {
