@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-
 class SongsHandler {
    constructor(service, validator) {
       this._service = service;
@@ -17,7 +15,12 @@ class SongsHandler {
       const { title, year, performer, genre, duration, albumId } = request.payload;
 
       const songId = await this._service.addSong({
-         title, year, performer, genre, duration, albumId,
+         title,
+         year,
+         performer,
+         genre,
+         duration,
+         albumId,
       });
 
       const response = h.response({
@@ -31,7 +34,7 @@ class SongsHandler {
       return response;
    }
 
-   async getSongsHandler(request, h) {
+   async getSongsHandler(request) {
       const { title, performer } = request.query;
       const songs = await this._service.getSongs({ title, performer });
       return {
@@ -42,7 +45,7 @@ class SongsHandler {
       };
    }
 
-   async getSongByIdHandler(request, h) {
+   async getSongByIdHandler(request) {
       const { id } = request.params;
       const song = await this._service.getSongById(id);
       return {
@@ -53,7 +56,7 @@ class SongsHandler {
       };
    }
 
-   async putSongByIdHandler(request, h) {
+   async putSongByIdHandler(request) {
       this._validator.validatePutSongsPayload(request.payload);
       const { id } = request.params;
 
@@ -65,7 +68,7 @@ class SongsHandler {
       };
    }
 
-   async deleteSongByIdHandler(request, h) {
+   async deleteSongByIdHandler(request) {
       const { id } = request.params;
       await this._service.deleteSongById(id);
       return {
