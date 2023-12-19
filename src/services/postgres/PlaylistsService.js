@@ -116,6 +116,35 @@ class PlaylistsService {
       return result.rows;
    }
 
+   async getPlaylistActivities(userId) {
+      const query = {
+         text: `
+         SELECT
+            playlists.id AS playlist_id,
+            users.username,
+            songs.title,
+            playlist_song_activities.action,
+            playlist_song_activities.time
+         FROM
+            playlists
+         JOIN
+            users ON playlists.owner = users.id
+         JOIN
+            playlist_song_activities ON playlists.id = playlist_song_activities.playlist_id
+         JOIN
+            songs ON playlist_song_activities.song_id = songs.id
+         WHERE
+            playlists.owner = $1
+         ORDER BY
+            playlist_song_activities.time
+         `,
+         values: [userId],
+      };
+
+      const result = await this._pool.query(query);
+      return result.rows;
+   }
+
    async verifyPlaylistOwner(id, owner) {
       const query = {
          text: 'SELECT * FROM playlists WHERE id = $1',
@@ -160,6 +189,19 @@ class PlaylistsService {
 
       if (!result.rowCount) {
          throw new NotFoundError('Id lagu tidak ditemukan');
+      }
+   }
+
+   async verifyPlaylistId(playlistId) {
+      const query = {
+         text: 'SELECT * FROM playlists WHERE id = $1',
+         values: [playlistId],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rowCount) {
+         throw new NotFoundError('Id playlist tidak ditemukan');
       }
    }
 }

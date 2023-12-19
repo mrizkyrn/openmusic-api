@@ -1,6 +1,7 @@
 class PlaylistHandler {
-   constructor(service, validator) {
+   constructor(service, playlistSongActivitiesService, validator) {
       this._service = service;
+      this._playlistSongActivitiesService = playlistSongActivitiesService;
       this._validator = validator;
 
       this.postPlaylistHandler = this.postPlaylistHandler.bind(this);
@@ -9,6 +10,7 @@ class PlaylistHandler {
       this.postSongToPlaylistHandler = this.postSongToPlaylistHandler.bind(this);
       this.getSongsFromPlaylistHandler = this.getSongsFromPlaylistHandler.bind(this);
       this.deleteSongFromPlaylistHandler = this.deleteSongFromPlaylistHandler.bind(this);
+      this.getPlaylistActivitiesHandler = this.getPlaylistActivitiesHandler.bind(this);
    }
 
    async postPlaylistHandler(request, h) {
@@ -62,6 +64,7 @@ class PlaylistHandler {
       await this._service.verifySongId(songId);
       await this._service.verifyPlaylistAccess(playlistId, credentialId);
       await this._service.addSongToPlaylist(playlistId, songId);
+      await this._playlistSongActivitiesService.addPlaylistActivity(playlistId, songId, credentialId, 'add');
 
       const response = h.response({
          status: 'success',
@@ -104,10 +107,33 @@ class PlaylistHandler {
 
       await this._service.verifyPlaylistAccess(playlistId, credentialId);
       await this._service.deleteSongFromPlaylist(playlistId, songId);
+      await this._playlistSongActivitiesService.addPlaylistActivity(playlistId, songId, credentialId, 'delete');
 
       return {
          status: 'success',
          message: 'Lagu berhasil dihapus dari playlist',
+      };
+   }
+
+   async getPlaylistActivitiesHandler(request) {
+      const { id: credentialId } = request.auth.credentials;
+      const { id: playlistId } = request.params;
+
+      await this._service.verifyPlaylistId(playlistId);
+      await this._service.verifyPlaylistAccess(playlistId, credentialId);
+      const result = await this._service.getPlaylistActivities(credentialId);
+
+      return {
+         status: 'success',
+         data: {
+            playlistId: result[0].playlist_id,
+            activities: result.map((item) => ({
+               username: item.username,
+               title: item.title,
+               action: item.action,
+               time: item.time,
+            })),
+         },
       };
    }
 }
