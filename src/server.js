@@ -4,31 +4,42 @@ const hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
 const ClientError = require('./exceptions/ClientError');
 
+// Albums
 const albums = require('./api/albums');
 const AlbumsService = require('./services/postgres/AlbumsService');
 const AlbumsValidator = require('./validator/albums');
 
+// Songs
 const songs = require('./api/songs');
 const SongsService = require('./services/postgres/SongsService');
 const SongsValidator = require('./validator/songs');
 
+// Users
 const users = require('./api/users');
 const UsersService = require('./services/postgres/UsersService');
 const UsersValidator = require('./validator/users');
 
+// Authentications
 const authentications = require('./api/authentications');
 const AuthenticationsService = require('./services/postgres/AuthenticationsService');
 const TokenManager = require('./tokenize/TokenManager');
 const AuthenticationsValidator = require('./validator/authentications');
 
+// Playlists
 const playlists = require('./api/playlists');
 const PlaylistsService = require('./services/postgres/PlaylistsService');
 const PlaylistSongActivitiesService = require('./services/postgres/PlaylistSongActivitiesService');
 const PlaylistsValidator = require('./validator/playlists');
 
+// Collaborations
 const collaborations = require('./api/collaborations');
 const CollaborationsService = require('./services/postgres/CollaborationsService');
 const CollaborationsValidator = require('./validator/collaborations');
+
+// Exports
+const _exports = require('./api/exports');
+const ProducerService = require('./services/rabbitmq/ProducerService');
+const ExportsValidator = require('./validator/exports');
 
 const init = async () => {
    const albumsService = new AlbumsService();
@@ -120,13 +131,14 @@ const init = async () => {
             validator: CollaborationsValidator,
          },
       },
-      // {
-      //    plugin: playlistSongActivities,
-      //    options: {
-      //       servicde: playlistSongActivitiesService,
-      //       validator: PlaylistSongActivitiesValidator,
-      //    },
-      // },
+      {
+         plugin: _exports,
+         options: {
+            producerService: ProducerService,
+            playlistsService,
+            validator: ExportsValidator,
+         },
+      },
    ]);
 
    // error handling
