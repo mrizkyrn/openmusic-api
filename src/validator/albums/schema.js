@@ -1,13 +1,19 @@
-const joi = require('joi');
+const Joi = require('joi');
 
-const PostAlbumsPayloadSchema = joi.object({
-   name: joi.string().required(),
-   year: joi.number().integer().required(),
+const PostAlbumsPayloadSchema = Joi.object({
+   name: Joi.string().required(),
+   year: Joi.number().integer().required(),
 });
 
-const PutAlbumsPayloadSchema = joi.object({
-   name: joi.string().required(),
-   year: joi.number().integer().required(),
+const PutAlbumsPayloadSchema = Joi.object({
+   name: Joi.string().required(),
+   year: Joi.number().integer().required(),
 });
 
-module.exports = { PostAlbumsPayloadSchema, PutAlbumsPayloadSchema };
+const PostCoversPayloadSchema = Joi.object({
+   'content-type': Joi.string()
+      .valid('image/apng', 'image/avif', 'image/gif', 'image/jpeg', 'image/png', 'image/webp')
+      .required(),
+}).unknown();
+
+module.exports = { PostAlbumsPayloadSchema, PutAlbumsPayloadSchema, PostCoversPayloadSchema };

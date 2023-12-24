@@ -13,7 +13,7 @@ class AlbumsService {
       const createdAt = new Date().toISOString();
 
       const query = {
-         text: 'INSERT INTO albums VALUES($1, $2, $3, $4, $4) RETURNING id',
+         text: 'INSERT INTO albums (id, name, year, created_at, updated_at) VALUES ($1, $2, $3, $4, $4) RETURNING id',
          values: [id, name, year, createdAt],
       };
 
@@ -33,13 +33,14 @@ class AlbumsService {
                albums.id AS album_id,
                albums.name AS album_name,
                albums.year AS album_year,
+               albums.cover AS album_cover,
                songs.id AS song_id,
                songs.title AS song_title,
                songs.performer AS song_performer
             FROM
                albums
             LEFT JOIN
-               songs ON albums.id = songs."albumId"
+               songs ON albums.id = songs.album_id
             WHERE
                albums.id = $1;
          `,
@@ -82,6 +83,20 @@ class AlbumsService {
       }
 
       return result.rows[0].id;
+   }
+
+   async addAlbumCoverById(id, filename) {
+      const updatedAt = new Date().toISOString();
+      const query = {
+         text: 'UPDATE albums SET cover = $1, updated_at = $2 WHERE id = $3 RETURNING id',
+         values: [filename, updatedAt, id],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rows.length) {
+         throw new NotFoundError('Gagal memperbarui cover album. Id tidak ditemukan');
+      }
    }
 }
 

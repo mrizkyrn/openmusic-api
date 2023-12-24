@@ -73,7 +73,7 @@ class SongsService {
 
       if (albumId !== undefined) {
          values.push(albumId);
-         setClauses.push(`albumId = $${values.length}`);
+         setClauses.push(`album_id = $${values.length}`);
       }
 
       values.push(updatedAt, id);
