@@ -9,6 +9,9 @@ class AlbumsHandler {
       this.putAlbumByIdHandler = this.putAlbumByIdHandler.bind(this);
       this.deleteAlbumByIdHandler = this.deleteAlbumByIdHandler.bind(this);
       this.postUploadCoverHandler = this.postUploadCoverHandler.bind(this);
+      this.postLikeAlbumByIdHandler = this.postLikeAlbumByIdHandler.bind(this);
+      this.deleteLikeAlbumByIdHandler = this.deleteLikeAlbumByIdHandler.bind(this);
+      this.getTotalLikeAlbumByIdHandler = this.getTotalLikeAlbumByIdHandler.bind(this);
    }
 
    async postAlbumHandler(request, h) {
@@ -77,6 +80,7 @@ class AlbumsHandler {
       };
    }
 
+   // album covers
    async postUploadCoverHandler(request, h) {
       const { cover } = request.payload;
       this._validator.validatePostCoversPayload(cover.hapi.headers);
@@ -92,6 +96,49 @@ class AlbumsHandler {
       });
       response.code(201);
       return response;
+   }
+
+   // album likes
+   async postLikeAlbumByIdHandler(request, h) {
+      const { id } = request.params;
+      const { id: credentialId } = request.auth.credentials;
+
+      await this._albumsService.verifyAlbumId(id);
+      await this._albumsService.verifyUserLikeAlbumById(id, credentialId);
+      await this._albumsService.addLikeAlbumById(id, credentialId);
+
+      const response = h.response({
+         status: 'success',
+         message: 'Album berhasil dilike',
+      });
+      response.code(201);
+      return response;
+   }
+
+   async deleteLikeAlbumByIdHandler(request, h) {
+      const { id } = request.params;
+      const { id: credentialId } = request.auth.credentials;
+
+      await this._albumsService.deleteLikeAlbumById(id, credentialId);
+
+      const response = h.response({
+         status: 'success',
+         message: 'Album berhasil diunliked',
+      });
+      response.code(200);
+      return response;
+   }
+
+   async getTotalLikeAlbumByIdHandler(request) {
+      const { id } = request.params;
+      const likes = await this._albumsService.getTotalLikeAlbumById(id);
+
+      return {
+         status: 'success',
+         data: {
+            likes: Number(likes),
+         },
+      };
    }
 }
 

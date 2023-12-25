@@ -85,6 +85,20 @@ class AlbumsService {
       return result.rows[0].id;
    }
 
+   async verifyAlbumId(id) {
+      const query = {
+         text: 'SELECT id FROM albums WHERE id = $1',
+         values: [id],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rowCount) {
+         throw new NotFoundError('Album tidak ditemukan');
+      }
+   }
+
+   // album covers
    async addAlbumCoverById(id, filename) {
       const updatedAt = new Date().toISOString();
       const query = {
@@ -96,6 +110,63 @@ class AlbumsService {
 
       if (!result.rows.length) {
          throw new NotFoundError('Gagal memperbarui cover album. Id tidak ditemukan');
+      }
+   }
+
+   // album likes
+   async addLikeAlbumById(id, userId) {
+      const idLike = `like-${nanoid(16)}`;
+
+      const query = {
+         text: 'INSERT INTO user_album_likes VALUES ($1, $2, $3) RETURNING id',
+         values: [idLike, userId, id],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rows[0].id) {
+         throw new InvariantError('Gagal menambahkan like album');
+      }
+
+      return result.rows[0].id;
+   }
+
+   async deleteLikeAlbumById(id, userId) {
+      const query = {
+         text: 'DELETE FROM user_album_likes WHERE user_id = $1 AND album_id = $2 RETURNING id',
+         values: [userId, id],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rows.length) {
+         throw new NotFoundError('Like album gagal dihapus. Id tidak ditemukan');
+      }
+
+      return result.rows[0].id;
+   }
+
+   async getTotalLikeAlbumById(id) {
+      const query = {
+         text: 'SELECT COUNT(*) FROM user_album_likes WHERE album_id = $1',
+         values: [id],
+      };
+
+      const result = await this._pool.query(query);
+
+      return result.rows[0].count;
+   }
+
+   async verifyUserLikeAlbumById(id, userId) {
+      const query = {
+         text: 'SELECT * FROM user_album_likes WHERE album_id = $1 AND user_id = $2',
+         values: [id, userId],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (result.rowCount) {
+         throw new InvariantError('User sudah menyukai album ini');
       }
    }
 }
