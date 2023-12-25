@@ -34,21 +34,22 @@ class AlbumsHandler {
    async getAlbumByIdHandler(request) {
       const { id } = request.params;
       const result = await this._albumsService.getAlbumById(id);
-      const coverUrl = result[0].album_cover ? `http://${process.env.HOST}:${process.env.PORT}/album/${result[0].album_cover}` : null;
+      const coverUrl = result[0].album_cover
+         ? `http://${process.env.HOST}:${process.env.PORT}/album/${result[0].album_cover}`
+         : null;
 
       const album = {
          id: result[0].album_id,
          name: result[0].album_name,
          year: result[0].album_year,
          coverUrl,
-         songs:
-            result[0].song_id
-               ? result.map((song) => ({
-                  id: song.song_id,
-                  title: song.song_title,
-                  performer: song.song_performer,
-               }))
-               : [],
+         songs: result[0].song_id
+            ? result.map((song) => ({
+               id: song.song_id,
+               title: song.song_title,
+               performer: song.song_performer,
+            }))
+            : [],
       };
 
       return {
@@ -129,16 +130,22 @@ class AlbumsHandler {
       return response;
    }
 
-   async getTotalLikeAlbumByIdHandler(request) {
+   async getTotalLikeAlbumByIdHandler(request, h) {
       const { id } = request.params;
-      const likes = await this._albumsService.getTotalLikeAlbumById(id);
+      const { likes, dataSource } = await this._albumsService.getTotalLikeAlbumById(id);
 
-      return {
+      const response = {
          status: 'success',
          data: {
             likes: Number(likes),
          },
       };
+
+      if (dataSource === 'cache') {
+         return h.response(response).header('X-Data-Source', 'cache');
+      }
+
+      return response;
    }
 }
 
